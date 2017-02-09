@@ -34,6 +34,24 @@ function createKeyframes(name: String, frames: Array = []) {
 	}
 	return result.join('');
 }
+function createKeyframesWithSprite(name: String, frameCount: Number, direction: String = 'row') {
+	let result = [];
+	let unit = 100 / (frameCount - 1);
+	let rules = [];
+	for (let i = 0; i < frameCount; i++) {
+		if (direction === 'row') {
+			rules.push(`${unit * i}% { background-position-x: ${unit * i}% }`);
+		}
+		else {
+			rules.push(`${unit * i}% { background-position-y: ${unit * i}% }`);
+		}
+	}
+	let rule = rules.join('');
+	result.push(`@keyframes ${name} { ${rule} }`);
+	result.push(`@-webkit-keyframes ${name} { ${rule} }`);
+
+	return result.join('');
+}
 
 function preloadImage(images: Array = [], callback: Function, progress: Function) {
 	let len = images.length;
@@ -78,16 +96,16 @@ function preloadImage(images: Array = [], callback: Function, progress: Function
 	});
 }
 
-function addEventListener(ele:HTMLElement,type:String,listener:Function){
-	let types=type.split(' ');
-	types.map(item=>{
-		ele.addEventListener(item,listener,false);
+function addEventListener(ele: HTMLElement, type: String, listener: Function) {
+	let types = type.split(' ');
+	types.map(item=> {
+		ele.addEventListener(item, listener, false);
 	});
 }
-function removeEventListener(ele:HTMLElement,type:String,listener:Function){
-	let types=type.split(' ');
-	types.map(item=>{
-		ele.removeEventListener(item,listener,false);
+function removeEventListener(ele: HTMLElement, type: String, listener: Function) {
+	let types = type.split(' ');
+	types.map(item=> {
+		ele.removeEventListener(item, listener, false);
 	});
 }
 
@@ -121,7 +139,7 @@ export default class KeyframeAnimation extends Component {
 		autoStart: PropTypes.bool,
 		onStart: PropTypes.func,
 		onEnd: PropTypes.func,
-		onIteration:PropTypes.func,
+		onIteration: PropTypes.func,
 		name: PropTypes.string.isRequired,
 		style: PropTypes.object
 	}
@@ -130,23 +148,37 @@ export default class KeyframeAnimation extends Component {
 		autoStart: true,
 		onStart: ()=>null,
 		onEnd: ()=>null,
-		onIteration:()=>null,
+		onIteration: ()=>null,
 		style: {
 			width: '100px',
 			height: '100px',
 			backgroundRepeat: "no-repeat",
-			backgroundSize: "100%"
 		}
 	}
 
 	constructor(props: Object) {
 		super(props);
 		this.state = {
-			animationName: 'unset'
+			style: {
+				WebkitAnimationName: 'unset',
+				animationName: 'unset'
+			}
 		};
 		if (props.frames) {
 			// generate @frames
 			this.style = createStyle(props.name, createKeyframes(props.name, props.frames));
+			this.state.style.backgroundSize = '100% 100%';
+		}
+		else if (props.sprite) {
+			this.style = createStyle(props.name, createKeyframesWithSprite(props.name, props.sprite.frameCount, props.sprite.direction || 'row'));
+			if(!props.sprite.direction || props.sprite.direction==='row') {
+				this.state.style.backgroundSize = 'auto 100%';
+			}
+			else{
+				this.state.style.backgroundSize = '100% auto';
+			}
+			this.state.style.backgroundPosition = '0% 0%';
+			this.state.style.backgroundImage = `url('${props.sprite.source}')`;
 		}
 	}
 
@@ -160,26 +192,37 @@ export default class KeyframeAnimation extends Component {
 			});
 		}
 		// add event
-		addEventListener(this.refs.el,'animationstart webkitAnimationStart',this.props.onStart);
-		addEventListener(this.refs.el,'animationiteration webkitAnimationIteration',this.props.onIteration);
-		addEventListener(this.refs.el,'animationend webkitAnimationEnd',this.props.onEnd);
+		addEventListener(this.refs.el, 'animationstart webkitAnimationStart', this.props.onStart);
+		addEventListener(this.refs.el, 'animationiteration webkitAnimationIteration', this.props.onIteration);
+		addEventListener(this.refs.el, 'animationend webkitAnimationEnd', this.props.onEnd);
 	}
-	componentWillUnmount(){
+
+	componentWillUnmount() {
 		// remove event
-		removeEventListener(this.refs.el,'animationstart webkitAnimationStart',this.props.onStart);
-		removeEventListener(this.refs.el,'animationiteration webkitAnimationIteration',this.props.onIteration);
-		removeEventListener(this.refs.el,'animationend webkitAnimationEnd',this.props.onEnd);
+		removeEventListener(this.refs.el, 'animationstart webkitAnimationStart', this.props.onStart);
+		removeEventListener(this.refs.el, 'animationiteration webkitAnimationIteration', this.props.onIteration);
+		removeEventListener(this.refs.el, 'animationend webkitAnimationEnd', this.props.onEnd);
+		// remove style
+		if (this.style) {
+			removeStyle(this.style);
+		}
 	}
 
 	start() {
 		this.setState(Object.assign({}, this.state, {
-			animationName: this.props.name
+			style: Object.assign({}, this.state.style, {
+				WebkitAnimationName: this.props.name,
+				animationName: this.props.name
+			})
 		}));
 	}
 
 	stop() {
 		this.setState(Object.assign({}, this.state, {
-			animationName: 'unset'
+			style: Object.assign({}, this.state.style, {
+				WebkitAnimationName: 'unset',
+				animationName: 'unset'
+			})
 		}));
 	}
 
@@ -187,10 +230,7 @@ export default class KeyframeAnimation extends Component {
 		return (
 			<div className={`keyframe-animation-${this.props.name}`}
 				 ref="el"
-				 style={Object.assign({},defaultStyle,this.props.style,{
-				 	WebkitAnimationName:this.state.animationName,
-				 	animationName:this.state.animationName
-				 })}></div>
+				 style={Object.assign({},defaultStyle,this.props.style,this.state.style)}></div>
 		);
 	}
 }

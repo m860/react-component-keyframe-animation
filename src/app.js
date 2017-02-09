@@ -33,6 +33,7 @@ class App extends Component {
 	render() {
 		return (
 			<div id="app">
+				<h1>设置frames实现动画</h1>
 				<KeyframeAnimation name="test"
 								   frames={this.frames}
 								   autoStart={true}
@@ -45,6 +46,21 @@ class App extends Component {
 								   onIteration={()=>{
 								   	   console.log('iteration');
 								   }}/>
+				<h1>设置sprite(横向排列)实现动画</h1>
+				<KeyframeAnimation
+					sprite={{
+						source:require('./sprite1.jpg'),
+						frameCount:8
+					}}
+					name="test-sprite1"/>
+				<h1>设置sprite(纵向排列)实现动画</h1>
+				<KeyframeAnimation
+					sprite={{
+						source:require('./sprite2.jpg'),
+						frameCount:8,
+						direction:'column'
+					}}
+					name="test-sprite2"/>
 			</div>
 		);
 	}

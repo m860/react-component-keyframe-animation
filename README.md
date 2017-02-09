@@ -9,6 +9,8 @@ React KeyframeAnimation
 [![npm download](https://img.shields.io/npm/dt/react-component-keyframe-animation.svg)](https://www.npmjs.com/package/react-component-keyframe-animation)
 <!-- endbadge -->
 
+<img src='https://raw.githubusercontent.com/m860/react-component-keyframe-animation/master/src/react-component-keyframe-animation-screenshot.gif'>
+
 # Install
 ```bash
 npm install react-component-keyframe-animation --save
@@ -31,6 +33,15 @@ export default class XX extends Component{
 # Props
 ## name:String.isRequired
 设置关键帧动画的名字
+## sprite:Object
+设置关键帧序列,此方式是以单张图片按照横向或者是纵向连续排列,数据结构如下:
+```javascript
+{
+    source: String.isRequired,			
+    direction: String,              // ['row', 'column'] 'row' as default
+    frameCount: Number.isRequired   // 
+}
+```
 ## frames:String[]
 设置关键帧的帧序列
 ## preload:Boolean=true
